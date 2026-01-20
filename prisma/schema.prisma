@@ -13,3 +13,17 @@ model User {
   password String
   role     String @default("user")
 }
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Int
+  createdAt DateTime @default(now())
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+}

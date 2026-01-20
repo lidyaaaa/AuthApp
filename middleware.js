@@ -7,13 +7,21 @@ export async function middleware(req) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const { pathname } = req.nextUrl;
+  const url = req.nextUrl.clone();
+  const { pathname } = url;
+
+  // ✅ IZINKAN halaman ini lewat (ANTI LOOP)
+  if (
+    pathname === "/unauthorized" ||
+    pathname === "/forbidden"
+  ) {
+    return NextResponse.next();
+  }
 
   // 🚫 BELUM LOGIN
   if (!token) {
-     return NextResponse.redirect(
-      new URL("/unauthorized", req.url)
-    );
+    url.pathname = "/unauthorized";
+    return NextResponse.redirect(url);
   }
 
   // 🚫 ADMIN ONLY
@@ -21,9 +29,8 @@ export async function middleware(req) {
     pathname.startsWith("/dashboard/admin") &&
     token.role !== "admin"
   ) {
-    return NextResponse.redirect(
-      new URL("/forbidden", req.url)
-    );
+    url.pathname = "/forbidden";
+    return NextResponse.redirect(url);
   }
 
   // 🚫 USER ONLY
@@ -31,9 +38,8 @@ export async function middleware(req) {
     pathname.startsWith("/dashboard/user") &&
     token.role !== "user"
   ) {
-    return NextResponse.redirect(
-      new URL("/forbidden", req.url)
-    );
+    url.pathname = "/forbidden";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
