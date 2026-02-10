@@ -1,19 +1,41 @@
 import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
+import Layout from "@/components/Layout"; // pastikan path sesuai
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (status === "loading") {
+  useEffect(() => {
+    if (status === "authenticated") fetchProducts();
+  }, [status]);
+
+  async function fetchProducts() {
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      setProducts(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (status === "loading" || loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" />
-      </div>
+      <Layout>
+        <div className="d-flex justify-content-center align-items-center vh-100">
+          <div className="spinner-border text-primary" />
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container py-5">
-      {/* Header */}
+    <Layout>
+      {/* Header + Profile */}
       <div className="d-flex justify-content-between align-items-center mb-5">
         <div>
           <h2 className="fw-bold mb-0">Dashboard</h2>
@@ -21,7 +43,6 @@ export default function Dashboard() {
             Welcome back, {session.user.email}
           </small>
         </div>
-
         <button
           className="btn btn-outline-danger btn-sm"
           onClick={() => signOut({ callbackUrl: "/login" })}
@@ -30,68 +51,55 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Profile Card */}
-      <div className="card shadow-sm border-0 mb-4">
-        <div className="card-body d-flex align-items-center gap-3">
-          <div
-            className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
-            style={{ width: 48, height: 48 }}
-          >
-            👤
-          </div>
+      {/* Products List */}
+      <h4>Products</h4>
+      {products.length === 0 ? (
+        <p className="text-muted">Belum ada produk</p>
+      ) : (
+        <div className="row g-3 mb-4">
+          {products.map((p) => (
+            <div key={p.id} className="col-md-4">
+              <div className="card shadow-sm p-3 h-100">
+                <h6>{p.name}</h6>
+                <p>Rp {p.price.toLocaleString()}</p>
 
-          <div>
-            <h6 className="mb-1 fw-semibold">Profile Information</h6>
-            <small className="text-muted d-block">
-              Email: {session.user.email}
-            </small>
-            <small className="text-muted">
-              Role: <span className="fw-semibold">{session.user.role}</span>
-            </small>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="row g-4 mb-4">
-        <div className="col-md-4">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body">
-              <small className="text-muted">Total Login</small>
-              <h3 className="fw-bold mt-2">12</h3>
+                {/* Action hanya untuk admin */}
+                {session.user.role === "admin" && (
+                  <div className="mt-2 d-flex gap-2">
+                    <button
+                      className="btn btn-warning btn-sm"
+                      onClick={() =>
+                        (window.location.href = `/admin/products/edit/${p.id}`)
+                      }
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={async () => {
+                        if (!confirm("Hapus produk ini?")) return;
+                        await fetch(`/api/products/${p.id}`, { method: "DELETE" });
+                        fetchProducts();
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
+      )}
 
-        <div className="col-md-4">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body">
-              <small className="text-muted">Status</small>
-              <h3 className="fw-bold mt-2 text-success">Active</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-4">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body">
-              <small className="text-muted">Role</small>
-              <h3 className="fw-bold mt-2 text-capitalize">
-                {session.user.role}
-              </h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Admin Action */}
+      {/* Admin Manage Button */}
       {session.user.role === "admin" && (
-        <div className="text-end">
-          <a href="/admin/users" className="btn btn-primary">
-            Manage Users
+        <div className="text-end mt-3">
+          <a href="/admin/products" className="btn btn-primary">
+            Manage Products
           </a>
         </div>
       )}
-    </div>
+    </Layout>
   );
 }
