@@ -35,22 +35,6 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      {/* Header + Profile */}
-      <div className="d-flex justify-content-between align-items-center mb-5">
-        <div>
-          <h2 className="fw-bold mb-0">Dashboard</h2>
-          <small className="text-muted">
-            Welcome back, {session.user.email}
-          </small>
-        </div>
-        <button
-          className="btn btn-outline-danger btn-sm"
-          onClick={() => signOut({ callbackUrl: "/login" })}
-        >
-          Logout
-        </button>
-      </div>
-
       {/* Products List */}
       <h4>Products</h4>
       {products.length === 0 ? (
@@ -89,15 +73,6 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Admin Manage Button */}
-      {session.user.role === "admin" && (
-        <div className="text-end mt-3">
-          <a href="/admin/products" className="btn btn-primary">
-            Manage Products
-          </a>
         </div>
       )}
     </Layout>

@@ -48,7 +48,7 @@ export default function EditProduct() {
       }
 
       alert("Produk berhasil diupdate");
-      router.push("/admin/products");
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       alert("Terjadi kesalahan saat update");

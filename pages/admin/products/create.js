@@ -18,7 +18,7 @@ export default function CreateProduct() {
     });
 
     setLoading(false);
-    router.push("/admin/products"); // balik ke halaman manage
+    router.push("/dashboard"); 
   }
 
   return (
@@ -54,7 +54,7 @@ export default function CreateProduct() {
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => router.push("/admin/products")}
+                onClick={() => router.push("/dashboard")}
               >
                 Cancel
               </button>
