@@ -1,88 +1,101 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-
-// ⚠️ kita butuh authOptions yang sama seperti di [...nextauth]
-export const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {},
-      async authorize(credentials) {
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-        if (!user) throw new Error("User tidak ditemukan");
-
-        const isValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isValid) throw new Error("Password salah");
-
-        return { id: user.id, email: user.email, role: user.role };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
-      return session;
-    },
-  },
-  session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
-};
+import { authOptions } from "../auth/[...nextauth]";
+import fs from "fs";
+import path from "path";
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-
-  console.log("SESSION DI API:", session);
-
-  if (!session || session.user.role !== "admin") {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-
-  const productId = Number(req.query.id);
-  if (isNaN(productId)) {
-    return res.status(400).json({ message: "ID tidak valid" });
-  }
-
   try {
+    const session = await getServerSession(req, res, authOptions);
+    const { id } = req.query;
+
+    // ================= GET 1 PRODUCT =================
     if (req.method === "GET") {
       const product = await prisma.product.findUnique({
-        where: { id: productId },
+        where: { id: Number(id) },
       });
-      if (!product) return res.status(404).json({ message: "Product not found" });
+
+      if (!product) {
+        return res.status(404).json({ message: "Produk tidak ditemukan" });
+      }
+
       return res.json(product);
     }
 
-    if (req.method === "PUT") {
-      const { name, price } = req.body;
+    // ===== ADMIN ONLY BELOW =====
+    if (!session || session.user.role !== "admin") {
+      return res.status(403).json({ message: "Akses ditolak" });
+    }
 
-      const updated = await prisma.product.update({
-        where: { id: productId },
-        data: { name, price: Number(price) },
+    // ================= UPDATE PRODUCT =================
+    if (req.method === "PUT") {
+      const { name, price, image } = req.body;
+
+      const existingProduct = await prisma.product.findUnique({
+        where: { id: Number(id) },
       });
 
-      return res.json(updated);
+      if (!existingProduct) {
+        return res.status(404).json({ message: "Produk tidak ditemukan" });
+      }
+
+      // AUTO DELETE IMAGE LAMA
+      if (
+        image &&
+        existingProduct.image &&
+        existingProduct.image !== image
+      ) {
+        const oldImagePath = path.join(
+          process.cwd(),
+          "public",
+          existingProduct.image
+        );
+
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
+      const updatedProduct = await prisma.product.update({
+        where: { id: Number(id) },
+        data: {
+          name,
+          price: Number(price),
+          image,
+        },
+      });
+
+      return res.json(updatedProduct);
     }
 
+    // ================= DELETE PRODUCT =================
     if (req.method === "DELETE") {
-      await prisma.product.delete({ where: { id: productId } });
-      return res.json({ message: "Produk berhasil dihapus" });
+      const product = await prisma.product.findUnique({
+        where: { id: Number(id) },
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: "Produk tidak ditemukan" });
+      }
+
+      if (product.image) {
+        const imagePath = path.join(process.cwd(), "public", product.image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      }
+
+      await prisma.product.delete({
+        where: { id: Number(id) },
+      });
+
+      return res.json({ message: "Produk dihapus" });
     }
 
-    return res.status(405).json({ message: "Method not allowed" });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    res.status(405).end();
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
   }
 }

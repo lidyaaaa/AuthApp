@@ -7,18 +7,23 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   name     String?
-  email    String @unique
+  email    String  @unique
   password String
-  role     String @default("user")
+  role     String  @default("user")
+
+  cartItems CartItem[]
 }
 
 model Product {
   id        Int      @id @default(autoincrement())
   name      String
   price     Int
+  image     String?
   createdAt DateTime @default(now())
+
+  cartItems CartItem[]
 }
 
 model Item {
@@ -26,4 +31,15 @@ model Item {
   title       String
   description String
   createdAt   DateTime @default(now())
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  productId Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }

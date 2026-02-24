@@ -7,7 +7,7 @@ export default function Layout({ children }) {
   return (
     <div className="d-flex flex-column min-vh-100">
 
-      {/* NAVBAR STYLE DASHBOARD */}
+      {/* NAVBAR */}
       <div className="d-flex justify-content-between align-items-center p-4 border-bottom">
         <div>
           <h2 className="fw-bold mb-0">Dashboard</h2>
@@ -20,13 +20,21 @@ export default function Layout({ children }) {
 
         <div className="d-flex align-items-center gap-2">
 
-          {/* ✅ khusus admin */}
+          {/* ✅ USER → tombol cart */}
+          {session && session.user.role === "user" && (
+            <Link href="/cart" className="btn btn-primary btn-sm">
+              🛒 Cart
+            </Link>
+          )}
+
+          {/* ✅ ADMIN → tambah produk */}
           {session?.user?.role === "admin" && (
             <Link href="/admin/products/create" className="btn btn-success btn-sm">
               + Tambah Produk
             </Link>
           )}
 
+          {/* LOGOUT */}
           {session && (
             <button
               className="btn btn-outline-danger btn-sm"
@@ -45,7 +53,7 @@ export default function Layout({ children }) {
 
       {/* FOOTER */}
       <footer className="bg-light text-center py-3 mt-auto">
-        &copy; {new Date().getFullYear()} My App. All rights reserved.
+        &copy; {new Date().getFullYear()} Kayzhaakies. All rights reserved.
       </footer>
     </div>
   );

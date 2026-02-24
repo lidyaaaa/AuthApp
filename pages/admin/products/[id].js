@@ -19,15 +19,16 @@ export default async function handler(req, res) {
     return res.json(product);
   }
 
-  // ✏️ UPDATE
+  // ✏️ UPDATE (SEKARANG SUPPORT FOTO)
   if (req.method === "PUT") {
-    const { name, price } = req.body;
+    const { name, price, image } = req.body;
 
     const updated = await prisma.product.update({
       where: { id },
       data: {
         name,
         price: Number(price),
+        image, // ← INI YANG DITAMBAH
       },
     });
 

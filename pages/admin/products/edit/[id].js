@@ -8,53 +8,55 @@ export default function EditProduct() {
   const [product, setProduct] = useState(null);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch product when ID is available
   useEffect(() => {
     if (id) fetchProduct();
   }, [id]);
 
   async function fetchProduct() {
-    try {
-      const res = await fetch(`/api/products/${id}`);
-      if (!res.ok) {
-        const data = await res.json();
-        return alert(data.message || "Product not found");
-      }
-      const data = await res.json();
-      setProduct(data);
-      setName(data.name);
-      setPrice(data.price);
-    } catch (err) {
-      console.error(err);
-      alert("Gagal ambil produk");
-    }
+    const res = await fetch(`/api/products/${id}`);
+    const data = await res.json();
+
+    setProduct(data);
+    setName(data.name);
+    setPrice(data.price);
+    setImage(data.image || "");
+  }
+
+  async function uploadImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setImage(data.path);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    try {
-      const res = await fetch(`/api/products/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, price: Number(price) }),
-      });
 
-      if (!res.ok) {
-        const data = await res.json();
-        return alert(data.message || "Gagal update produk");
-      }
+    await fetch(`/api/products/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        price: Number(price),
+        image,
+      }),
+    });
 
-      alert("Produk berhasil diupdate");
-      router.push("/dashboard");
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan saat update");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
+    router.push("/dashboard");
   }
 
   if (!product) return <p>Loading product...</p>;
@@ -71,6 +73,7 @@ export default function EditProduct() {
           placeholder="Nama produk"
           required
         />
+
         <input
           type="number"
           className="form-control mb-3"
@@ -79,6 +82,16 @@ export default function EditProduct() {
           placeholder="Harga"
           required
         />
+
+        <input type="file" className="form-control mb-3" onChange={uploadImage} />
+
+        {image && (
+          <img
+            src={image}
+            style={{ width: "100%", height: 200, objectFit: "cover" }}
+            className="mb-3"
+          />
+        )}
 
         <button className="btn btn-primary" type="submit" disabled={loading}>
           {loading ? "Updating..." : "Update"}

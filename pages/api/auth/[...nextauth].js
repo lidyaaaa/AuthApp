@@ -4,12 +4,16 @@ import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions = {
+  session: {
+    strategy: "jwt",
+  },
+
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        email: {},
+        password: {},
       },
 
       async authorize(credentials) {
@@ -30,10 +34,11 @@ export const authOptions = {
 
         if (!isValid) throw new Error("Password salah");
 
+        // ⭐ WAJIB return data lengkap
         return {
-          id: user.id,
+          id: String(user.id),
           email: user.email,
-          role: user.role,
+          role: user.role || "user",
         };
       },
     }),
@@ -41,6 +46,7 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
+      // saat login pertama kali
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -49,18 +55,20 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
+      // ⭐ pastikan session.user selalu ada
+      if (!session.user) {
+        session.user = {};
+      }
+
       session.user.id = token.id;
       session.user.role = token.role;
+
       return session;
     },
   },
 
   pages: {
     signIn: "/login",
-  },
-
-  session: {
-    strategy: "jwt",
   },
 
   secret: process.env.NEXTAUTH_SECRET,
