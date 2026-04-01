@@ -7,30 +7,26 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(cuid())
-  name     String?
-  email    String  @unique
-  password String
-  role     String  @default("user")
+  id        String     @id @default(cuid())
+  name      String?
+  email     String     @unique
+  password  String
+  role      String     @default("user")
 
   cartItems CartItem[]
+  orders    Order[]
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   name      String
   price     Int
   image     String?
-  createdAt DateTime @default(now())
+  stock     Int         @default(0) // 🔥 TAMBAHAN
+  createdAt DateTime    @default(now())
 
-  cartItems CartItem[]
-}
-
-model Item {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  createdAt   DateTime @default(now())
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 }
 
 model CartItem {
@@ -45,11 +41,23 @@ model CartItem {
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   userId    String
   total     Int
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
+  status    String      @default("pending")
+  createdAt DateTime    @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user       User        @relation(fields: [userId], references: [id])
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Int      // 🔥 harga saat checkout (biar aman kalau harga berubah)
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }

@@ -21,24 +21,40 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: "Alamat wajib diisi" });
       }
 
-      // ambil cart user
+      // 🔥 ambil cart + product
       const cartItems = await prisma.cartItem.findMany({
         where: { userId },
+        include: { product: true },
       });
 
       if (cartItems.length === 0) {
         return res.status(400).json({ message: "Cart kosong" });
       }
 
-      console.log("CHECKOUT:", {
-        userId,
-        address,
-        note,
-        paymentMethod,
-        items: cartItems,
-      });
+      // 🔥 VALIDASI STOK
+      for (let item of cartItems) {
+        if (item.quantity > item.product.stock) {
+          return res.status(400).json({
+            message: `Stok ${item.product.name} tidak cukup`,
+          });
+        }
+      }
 
-      // 🔥 hapus semua cart user setelah checkout
+      // 🔥 KURANGI STOK
+      for (let item of cartItems) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+        });
+      }
+
+      // 🔥 (optional) simpan order di sini kalau mau
+
+      // 🔥 hapus cart
       await prisma.cartItem.deleteMany({
         where: { userId },
       });

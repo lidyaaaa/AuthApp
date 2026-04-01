@@ -27,7 +27,6 @@ export default function UserDashboard() {
     }
   }
 
-  // 🔥 ADD TO CART (GLOBAL UPDATE)
   async function handleAddToCart(productId) {
     try {
       const res = await fetch("/api/cart", {
@@ -39,7 +38,6 @@ export default function UserDashboard() {
       });
 
       if (res.ok) {
-        // 🔥 trigger Layout biar update badge
         window.dispatchEvent(new Event("cartUpdated"));
       }
     } catch (error) {
@@ -83,7 +81,6 @@ export default function UserDashboard() {
 
   return (
     <Layout>
-      {/* 🔥 HEADER (TANPA CART LAGI) */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h4 className="fw-bold mb-0">Our Delicious Cakes 🎂</h4>
       </div>
@@ -126,11 +123,18 @@ export default function UserDashboard() {
           {filteredProducts.map((product) => (
             <div key={product.id} className="col-md-4">
               <div className="card h-100 shadow-sm rounded-4">
-                <img
-                  src={product.image || "/default-cake.jpg"}
-                  className="card-img-top"
-                  style={{ height: "200px", objectFit: "cover" }}
-                />
+                
+                {/* 🔥 TAMBAHAN STOK DI ATAS GAMBAR */}
+                <div className="position-relative">
+                  <img
+                    src={product.image || "/default-cake.jpg"}
+                    className="card-img-top"
+                    style={{ height: "200px", objectFit: "cover" }}
+                  />
+                  <span className="position-absolute top-0 end-0 m-2 badge bg-white text-dark shadow-sm">
+                    Stok: {product.stock ?? 0}
+                  </span>
+                </div>
 
                 <div className="card-body">
                   <h6 className="fw-bold">{product.name}</h6>
@@ -146,10 +150,16 @@ export default function UserDashboard() {
                     <button
                       className="btn btn-pink rounded-circle"
                       onClick={() => handleAddToCart(product.id)}
+                      disabled={product.stock === 0} // 🔥 disable kalau habis
                     >
                       🛒
                     </button>
                   </div>
+
+                  {/* 🔥 OPTIONAL: teks kalau stok habis */}
+                  {product.stock === 0 && (
+                    <small className="text-danger">Stok habis</small>
+                  )}
                 </div>
               </div>
             </div>
