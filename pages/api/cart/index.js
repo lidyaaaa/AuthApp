@@ -12,9 +12,7 @@ export default async function handler(req, res) {
 
     const userId = session.user.id;
 
-    // =========================
-    // ADD TO CART
-    // =========================
+    // ================= ADD TO CART =================
     if (req.method === "POST") {
       const { productId } = req.body;
 
@@ -29,17 +27,21 @@ export default async function handler(req, res) {
         },
       });
 
+      // kalau sudah ada → tambah quantity
       if (existing) {
         const updated = await prisma.cartItem.update({
           where: { id: existing.id },
           data: {
-            quantity: existing.quantity + 1,
+            quantity: {
+              increment: 1, // 🔥 lebih clean dari +1 manual
+            },
           },
         });
 
         return res.status(200).json(updated);
       }
 
+      // kalau belum ada → create baru
       const item = await prisma.cartItem.create({
         data: {
           userId,
@@ -51,20 +53,23 @@ export default async function handler(req, res) {
       return res.status(201).json(item);
     }
 
-    // =========================
-    // GET CART USER
-    // =========================
+    // ================= GET CART =================
     if (req.method === "GET") {
       const items = await prisma.cartItem.findMany({
         where: { userId },
-        include: { product: true },
-        orderBy: { createdAt: "desc" },
+        include: {
+          product: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
       });
 
       return res.status(200).json(items);
     }
 
     return res.status(405).json({ message: "Method tidak diizinkan" });
+
   } catch (error) {
     console.log("CART ERROR:", error);
     return res.status(500).json({ message: "Server error" });

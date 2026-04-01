@@ -43,3 +43,13 @@ model CartItem {
   user    User    @relation(fields: [userId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 }
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  total     Int
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
