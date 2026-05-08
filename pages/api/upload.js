@@ -22,7 +22,6 @@ export default async function handler(req, res) {
 
       let file = files.image;
 
-      // support formidable v2 (file bisa array)
       if (Array.isArray(file)) {
         file = file[0];
       }
@@ -31,10 +30,17 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "File tidak ditemukan" });
       }
 
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+
+      // 🔥 FIX: bikin folder kalau belum ada
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
       const data = fs.readFileSync(file.filepath);
 
       const fileName = Date.now() + "_" + file.originalFilename;
-      const uploadPath = path.join(process.cwd(), "public/uploads", fileName);
+      const uploadPath = path.join(uploadDir, fileName);
 
       fs.writeFileSync(uploadPath, data);
 

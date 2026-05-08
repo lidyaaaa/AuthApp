@@ -6,6 +6,7 @@ export default function CreateProduct() {
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [stock, setStock] = useState(""); // 🔥 TAMBAHAN
   const [image, setImage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,18 +26,11 @@ export default function CreateProduct() {
         body: formData,
       });
 
-      if (!res.ok) {
-        alert("Upload gambar gagal");
-        setUploading(false);
-        return;
-      }
-
       const data = await res.json();
       setImage(data.path);
       setUploading(false);
     } catch (error) {
       console.log(error);
-      alert("Terjadi error saat upload");
       setUploading(false);
     }
   }
@@ -44,10 +38,7 @@ export default function CreateProduct() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!image) {
-      alert("Upload gambar dulu ya");
-      return;
-    }
+    if (!image) return alert("Upload gambar dulu");
 
     try {
       setLoading(true);
@@ -58,13 +49,14 @@ export default function CreateProduct() {
         body: JSON.stringify({
           name,
           price: Number(price),
+          stock: Number(stock), // 🔥 TAMBAHAN
           image,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        alert(err.message || "Gagal menyimpan produk");
+        alert(err.message);
         setLoading(false);
         return;
       }
@@ -72,7 +64,6 @@ export default function CreateProduct() {
       router.push("/admin/dashboard");
     } catch (error) {
       console.log(error);
-      alert("Terjadi error");
       setLoading(false);
     }
   }
@@ -84,65 +75,44 @@ export default function CreateProduct() {
       <div className="card shadow-sm">
         <div className="card-body">
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Product Name</label>
-              <input
-                type="text"
-                className="form-control"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            <input
+              className="form-control mb-3"
+              placeholder="Product Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
 
-            <div className="mb-3">
-              <label className="form-label">Price</label>
-              <input
-                type="number"
-                className="form-control"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </div>
+            <input
+              type="number"
+              className="form-control mb-3"
+              placeholder="Price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
 
-            <div className="mb-3">
-              <label className="form-label">Product Image</label>
-              <input
-                type="file"
-                className="form-control"
-                accept="image/*"
-                onChange={uploadImage}
-                required
-              />
-              {uploading && <small>Uploading...</small>}
-            </div>
+            {/* 🔥 INPUT STOCK */}
+            <input
+              type="number"
+              className="form-control mb-3"
+              placeholder="Stock"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              required
+            />
 
-            {image && (
-              <img
-                src={image}
-                style={{ width: "100%", height: 200, objectFit: "cover" }}
-                className="mb-3"
-              />
-            )}
+            <input
+              type="file"
+              className="form-control mb-3"
+              onChange={uploadImage}
+            />
 
-            <div className="d-flex justify-content-end gap-2">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => router.push("/admin/dashboard")}
-              >
-                Cancel
-              </button>
+            {image && <img src={image} style={{ width: "100%" }} />}
 
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={loading || uploading}
-              >
-                {loading ? "Saving..." : "Save Product"}
-              </button>
-            </div>
+            <button className="btn btn-primary w-100">
+              {loading ? "Saving..." : "Save Product"}
+            </button>
           </form>
         </div>
       </div>

@@ -8,6 +8,7 @@ export default function EditProduct() {
   const [product, setProduct] = useState(null);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [stock, setStock] = useState(""); // 🔥 TAMBAHAN
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,13 +23,12 @@ export default function EditProduct() {
     setProduct(data);
     setName(data.name);
     setPrice(data.price);
+    setStock(data.stock); // 🔥
     setImage(data.image || "");
   }
 
   async function uploadImage(e) {
     const file = e.target.files[0];
-    if (!file) return;
-
     const formData = new FormData();
     formData.append("image", file);
 
@@ -51,15 +51,16 @@ export default function EditProduct() {
       body: JSON.stringify({
         name,
         price: Number(price),
+        stock: Number(stock), // 🔥
         image,
       }),
     });
 
     setLoading(false);
-    router.push("/dashboard");
+    router.push("/admin/dashboard");
   }
 
-  if (!product) return <p>Loading product...</p>;
+  if (!product) return <p>Loading...</p>;
 
   return (
     <div className="container py-5">
@@ -70,8 +71,6 @@ export default function EditProduct() {
           className="form-control mb-3"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Nama produk"
-          required
         />
 
         <input
@@ -79,21 +78,21 @@ export default function EditProduct() {
           className="form-control mb-3"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          placeholder="Harga"
-          required
         />
 
-        <input type="file" className="form-control mb-3" onChange={uploadImage} />
+        {/* 🔥 INPUT STOCK */}
+        <input
+          type="number"
+          className="form-control mb-3"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+        />
 
-        {image && (
-          <img
-            src={image}
-            style={{ width: "100%", height: 200, objectFit: "cover" }}
-            className="mb-3"
-          />
-        )}
+        <input type="file" onChange={uploadImage} />
 
-        <button className="btn btn-primary" type="submit" disabled={loading}>
+        {image && <img src={image} style={{ width: "100%" }} />}
+
+        <button className="btn btn-primary">
           {loading ? "Updating..." : "Update"}
         </button>
       </form>

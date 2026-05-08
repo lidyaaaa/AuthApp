@@ -126,9 +126,17 @@ export default function AdminDashboard() {
                 Total {filteredProducts.length} produk tersedia
               </p>
             </div>
-            
+
             {/* SEARCH BAR */}
             <div className="d-flex gap-2">
+              {/* 🔥 BUTTON TAMBAH PRODUK */}
+              <Link
+                href="/admin/products/create"
+                className="btn btn-pink rounded-pill px-3"
+              >
+                + Tambah Produk
+              </Link>
+
               <div className="position-relative">
                 <span className="position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary">🔍</span>
                 <input
@@ -166,27 +174,34 @@ export default function AdminDashboard() {
                         style={{ height: "180px", objectFit: "cover" }}
                         onError={(e) => (e.target.src = "/default-cake.jpg")}
                       />
-                      <span className="position-absolute top-0 end-0 m-3 badge bg-white text-dark shadow-sm">
-                        Stok: 10
+                      <span
+                        className={`position-absolute top-0 end-0 m-3 badge shadow-sm ${product.stock === 0
+                          ? "bg-danger"
+                          : product.stock < 5
+                            ? "bg-warning text-dark"
+                            : "bg-success"
+                          }`}
+                      >
+                        Stok: {product.stock ?? 0}
                       </span>
                     </div>
-                    
+
                     <div className="card-body">
                       <h6 className="fw-bold mb-2 text-truncate" title={product.name}>
                         {product.name}
                       </h6>
-                      
+
                       <div className="d-flex align-items-center mb-2">
                         <span className="text-warning me-2">★★★★★</span>
                         <small className="text-secondary">(24)</small>
                       </div>
-                      
+
                       <p className="fw-bold text-pink mb-3">
                         Rp {product.price?.toLocaleString()}
                       </p>
-                      
+
                       <div className="d-flex gap-2">
-                        <Link 
+                        <Link
                           href={`/admin/products/edit/${product.id}`}
                           className="btn btn-outline-primary rounded-pill flex-grow-1 btn-sm"
                         >

@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
     // ================= UPDATE PRODUCT =================
     if (req.method === "PUT") {
-      const { name, price, image } = req.body;
+      const { name, price, image, stock } = req.body; // 🔥 TAMBAH STOCK
 
       const existingProduct = await prisma.product.findUnique({
         where: { id: productId },
@@ -39,6 +39,11 @@ export default async function handler(req, res) {
 
       if (!existingProduct) {
         return res.status(404).json({ message: "Produk tidak ditemukan" });
+      }
+
+      // 🔥 VALIDASI STOCK
+      if (stock !== undefined && Number(stock) < 0) {
+        return res.status(400).json({ message: "Stock tidak boleh minus" });
       }
 
       // hapus gambar lama jika diganti
@@ -64,6 +69,7 @@ export default async function handler(req, res) {
           name,
           price: Number(price),
           image,
+          stock: stock !== undefined ? Number(stock) : existingProduct.stock, // 🔥 UPDATE STOCK
         },
       });
 

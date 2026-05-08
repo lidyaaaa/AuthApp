@@ -16,7 +16,7 @@ export default function Layout({ children, stats = [] }) {
     { name: "Dashboard", href: "/", icon: "📊", roles: ["admin", "user"] },
     { name: "Products", href: "/products", icon: "🍰", roles: ["user"] },
     { name: "My Orders", href: "/orders", icon: "📦", roles: ["user"] },
-    { name: "Admin Dashboard", href: "/admin", icon: "⚙️", roles: ["admin"] },
+    { name: "Cart Monitoring", href: "/admin/cart", icon: "🛒", roles: ["admin"] },
     { name: "Manage Products", href: "/admin/products", icon: "📝", roles: ["admin"] },
     { name: "Categories", href: "/admin/categories", icon: "🏷️", roles: ["admin"] },
   ];

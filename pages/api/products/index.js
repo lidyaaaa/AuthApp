@@ -6,15 +6,16 @@ export default async function handler(req, res) {
   try {
     const session = await getServerSession(req, res, authOptions);
 
-    // ===== GET =====
+    // ================= GET =================
     if (req.method === "GET") {
       const products = await prisma.product.findMany({
         orderBy: { createdAt: "desc" },
       });
+
       return res.status(200).json(products);
     }
 
-    // ===== POST =====
+    // ================= POST =================
     if (req.method === "POST") {
       console.log("BODY MASUK:", req.body);
 
@@ -28,11 +29,19 @@ export default async function handler(req, res) {
 
       const name = req.body?.name;
       const price = req.body?.price;
+      const stock = req.body?.stock; // 🔥 TAMBAHAN
       const image = req.body?.image || null;
 
+      // 🔥 VALIDASI
       if (!name || !price) {
         return res.status(400).json({
           message: "Name atau price kosong",
+        });
+      }
+
+      if (stock !== undefined && Number(stock) < 0) {
+        return res.status(400).json({
+          message: "Stock tidak boleh minus",
         });
       }
 
@@ -40,6 +49,7 @@ export default async function handler(req, res) {
         data: {
           name: String(name),
           price: Number(price),
+          stock: stock !== undefined ? Number(stock) : 0, // 🔥 DEFAULT 0
           image: image,
         },
       });
