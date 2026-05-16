@@ -33,45 +33,60 @@ export default async function handler(req, res) {
       return res.json({ message: "Item dihapus" });
     }
 
-    // ================= UPDATE QUANTITY =================
-    if (req.method === "PUT") {
-      const { quantity } = req.body;
+     // ================= UPDATE QUANTITY =================
+     if (req.method === "PUT") {
+       const { quantity, note } = req.body;
 
-      if (quantity === undefined) {
-        return res.status(400).json({ message: "Quantity wajib" });
-      }
+       const item = await prisma.cartItem.findFirst({
+         where: {
+           id,
+           userId,
+         },
+       });
 
-      const item = await prisma.cartItem.findFirst({
-        where: {
-          id,
-          userId,
-        },
-      });
+       if (!item) {
+         return res.status(404).json({ message: "Item tidak ditemukan" });
+       }
 
-      if (!item) {
-        return res.status(404).json({ message: "Item tidak ditemukan" });
-      }
+       // Validasi stok jika quantity diubah
+       if (quantity !== undefined) {
+         const newQty = Number(quantity);
+         const product = await prisma.product.findUnique({
+           where: { id: item.productId },
+         });
+         if (!product) {
+           return res.status(404).json({ message: "Produk tidak ditemukan" });
+         }
+         if (newQty > product.stock) {
+           return res.status(400).json({
+             message: `Stok tidak cukup. Tersisa: ${product.stock}`,
+           });
+         }
+         if (newQty <= 0) {
+           await prisma.cartItem.delete({ where: { id } });
+           return res.json({ message: "Item dihapus" });
+         }
+       }
 
-      // kalau quantity <= 0 → hapus item
-      if (quantity <= 0) {
-        await prisma.cartItem.delete({
+       const updateData = {};
+       if (quantity !== undefined) updateData.quantity = Number(quantity);
+       if (note !== undefined) updateData.note = note;
+
+        const updated = await prisma.cartItem.update({
           where: { id },
+          data: updateData,
         });
 
-        return res.json({ message: "Item dihapus" });
+        // Return with product relation
+        const updatedWithProduct = await prisma.cartItem.findUnique({
+          where: { id: updated.id },
+          include: { product: true },
+        });
+
+        return res.json(updatedWithProduct);
       }
 
-      const updated = await prisma.cartItem.update({
-        where: { id },
-        data: {
-          quantity,
-        },
-      });
-
-      return res.json(updated);
-    }
-
-    return res.status(405).json({ message: "Method tidak diizinkan" });
+     return res.status(405).json({ message: "Method tidak diizinkan" });
 
   } catch (error) {
     console.log(error);

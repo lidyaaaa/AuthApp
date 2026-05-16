@@ -1,4 +1,4 @@
-import {prisma} from "../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
@@ -12,30 +12,33 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: "Email dan password wajib" });
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
+  try { // ← WRAP INI
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-  if (existingUser) {
-    return res.status(400).json({ message: "Email sudah terdaftar" });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email sudah terdaftar" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: "user",
+      },
+    });
+
+    res.status(201).json({
+      message: "Register berhasil",
+      user: { id: user.id, email: user.email },
+    });
+
+  } catch (err) {
+    console.error("Register error:", err); // ← Lihat di terminal Next.js
+    res.status(500).json({ message: err.message || "Internal server error" });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      password: hashedPassword,
-      role: "user",
-    },
-  });
-
-  res.status(201).json({
-    message: "Register berhasil",
-    user: {
-      id: user.id,
-      email: user.email,
-    },
-  });
 }

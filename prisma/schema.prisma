@@ -7,14 +7,15 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  name      String?
-  email     String     @unique
-  password  String
-  role      String     @default("user")
+   id            String          @id @default(cuid())
+   name          String?
+   email         String          @unique
+   password      String
+   role          String          @default("user")
 
-  cartItems CartItem[]
-  orders    Order[]
+   cartItems     CartItem[]
+   orders        Order[]
+   notifications Notification[]
 }
 
 model Product {
@@ -34,7 +35,8 @@ model CartItem {
   userId    String
   productId Int
   quantity  Int      @default(1)
-  status    String   @default("active") // 🔥 PENTING
+  note      String?
+  status    String   @default("active")
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id])
@@ -42,23 +44,39 @@ model CartItem {
 }
 
 model Order {
-  id        Int         @id @default(autoincrement())
-  userId    String
-  total     Int
-  status    String      @default("pending")
-  createdAt DateTime    @default(now())
+   id              Int      @id @default(autoincrement())
+   userId          String
+   total           Int
+   status          String   @default("pending")
+   note            String?
+   paymentMethod   String   @default("COD")
+   paymentDetail   String?
+   createdAt       DateTime @default(now())
 
-  user       User        @relation(fields: [userId], references: [id])
-  orderItems OrderItem[]
+   user       User        @relation(fields: [userId], references: [id])
+   orderItems OrderItem[]
 }
 
 model OrderItem {
-  id        Int      @id @default(autoincrement())
-  orderId   Int
-  productId Int
-  quantity  Int
-  price     Int
+   id        Int      @id @default(autoincrement())
+   orderId   Int
+   productId Int
+   quantity  Int
+   price     Int
+   note      String?
 
-  order   Order   @relation(fields: [orderId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+   order   Order   @relation(fields: [orderId], references: [id])
+   product Product @relation(fields: [productId], references: [id])
+}
+
+model Notification {
+   id        Int      @id @default(autoincrement())
+   userId    String
+   title     String
+   message   String
+   type      String   @default("info") // info, warning, stock_out
+   isRead    Boolean  @default(false)
+   createdAt DateTime @default(now())
+
+   user User @relation(fields: [userId], references: [id])
 }

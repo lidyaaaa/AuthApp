@@ -14,8 +14,9 @@ export default function Layout({ children, stats = [] }) {
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: "📊", roles: ["admin", "user"] },
-    { name: "Products", href: "/products", icon: "🍰", roles: ["user"] },
-    { name: "My Orders", href: "/orders", icon: "📦", roles: ["user"] },
+    { name: "Products", href: "/user/products", icon: "🍰", roles: ["user"] },
+    { name: "My Orders", href: "/user/orders", icon: "📦", roles: ["user"] },
+     { name: "Notifications", href: "/notifications", icon: "🔔", roles: ["user", "admin"] },
     { name: "Cart Monitoring", href: "/admin/cart", icon: "🛒", roles: ["admin"] },
     { name: "Manage Products", href: "/admin/products", icon: "📝", roles: ["admin"] },
     { name: "Categories", href: "/admin/categories", icon: "🏷️", roles: ["admin"] },
@@ -28,14 +29,27 @@ export default function Layout({ children, stats = [] }) {
   // 🔥 FETCH CART
   async function fetchCartCount() {
     try {
-      if (!session) return;
+      if (!session) {
+        setCartCount(0);
+        return;
+      }
 
       const res = await fetch("/api/cart");
+      if (!res.ok) {
+        setCartCount(0);
+        return;
+      }
       const data = await res.json();
 
-      const total = data.reduce((sum, item) => sum + item.quantity, 0);
+      if (!Array.isArray(data)) {
+        setCartCount(0);
+        return;
+      }
+
+      const total = data.reduce((sum, item) => sum + (item.quantity || 0), 0);
       setCartCount(total);
     } catch (err) {
+      setCartCount(0);
       console.log(err);
     }
   }

@@ -12,46 +12,73 @@ export default async function handler(req, res) {
 
     const userId = session.user.id;
 
-    // ================= ADD TO CART =================
-    if (req.method === "POST") {
-      const { productId } = req.body;
+     // ================= ADD TO CART =================
+     if (req.method === "POST") {
+       const { productId, quantity = 1 } = req.body;
 
-      if (!productId) {
-        return res.status(400).json({ message: "Product ID wajib" });
-      }
+       if (!productId) {
+         return res.status(400).json({ message: "Product ID wajib" });
+       }
 
-      const existing = await prisma.cartItem.findFirst({
-        where: {
-          userId,
-          productId: Number(productId),
-        },
-      });
+       // Validasi stok
+       const product = await prisma.product.findUnique({
+         where: { id: Number(productId) },
+       });
 
-      // kalau sudah ada → tambah quantity
-      if (existing) {
-        const updated = await prisma.cartItem.update({
-          where: { id: existing.id },
+       if (!product) {
+         return res.status(404).json({ message: "Produk tidak ditemukan" });
+       }
+
+       const requestedQty = Number(quantity);
+       if (requestedQty > product.stock) {
+         return res.status(400).json({
+           message: `Stok tidak cukup. Tersisa: ${product.stock}`,
+         });
+       }
+
+       const existing = await prisma.cartItem.findFirst({
+         where: {
+           userId,
+           productId: Number(productId),
+         },
+       });
+
+        if (existing) {
+          const newQty = existing.quantity + requestedQty;
+          if (newQty > product.stock) {
+            return res.status(400).json({
+              message: `Stok tidak cukup. Total di keranjang akan ${newQty}, tersisa ${product.stock}`,
+            });
+          }
+
+          const updated = await prisma.cartItem.update({
+            where: { id: existing.id },
+            data: { quantity: newQty },
+          });
+
+          // Return with product
+          const updatedWithProduct = await prisma.cartItem.findUnique({
+            where: { id: updated.id },
+            include: { product: true },
+          });
+          return res.status(200).json(updatedWithProduct);
+        }
+
+        const item = await prisma.cartItem.create({
           data: {
-            quantity: {
-              increment: 1, // 🔥 lebih clean dari +1 manual
-            },
+            userId,
+            productId: Number(productId),
+            quantity: requestedQty,
           },
         });
 
-        return res.status(200).json(updated);
-      }
-
-      // kalau belum ada → create baru
-      const item = await prisma.cartItem.create({
-        data: {
-          userId,
-          productId: Number(productId),
-          quantity: 1,
-        },
-      });
-
-      return res.status(201).json(item);
-    }
+        // Return with product
+        const createdWithProduct = await prisma.cartItem.findUnique({
+          where: { id: item.id },
+          include: { product: true },
+        });
+        return res.status(201).json(createdWithProduct);
+     }
 
     // ================= GET CART =================
     if (req.method === "GET") {

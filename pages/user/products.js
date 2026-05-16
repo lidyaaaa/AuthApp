@@ -2,7 +2,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 
-export default function UserDashboard() {
+export default function UserProducts() {
   const { status } = useSession();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -124,8 +124,6 @@ export default function UserDashboard() {
           {filteredProducts.map((product) => (
             <div key={product.id} className="col-md-4">
               <div className="card h-100 shadow-sm rounded-4">
-                
-                {/* 🔥 TAMBAHAN STOK DI ATAS GAMBAR */}
                 <div className="position-relative">
                   <img
                     src={product.image || "/default-cake.jpg"}
@@ -151,13 +149,12 @@ export default function UserDashboard() {
                     <button
                       className="btn btn-pink rounded-circle"
                       onClick={() => handleAddToCart(product.id)}
-                      disabled={product.stock === 0} // 🔥 disable kalau habis
+                      disabled={product.stock === 0}
                     >
                       🛒
                     </button>
                   </div>
 
-                  {/* 🔥 OPTIONAL: teks kalau stok habis */}
                   {product.stock === 0 && (
                     <small className="text-danger">Stok habis</small>
                   )}

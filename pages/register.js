@@ -30,22 +30,28 @@ export default function Register() {
       return;
     }
 
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.message || "Registrasi gagal");
+      if (!res.ok) {
+        setError(data.message || "Registrasi gagal");
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
-      return;
+      setSuccess("Akun berhasil dibuat! Mengarahkan ke login...");
+      router.push("/login");
+    } catch (err) {
+      setError("Terjadi kesalahan, coba lagi");
+      setLoading(false);
     }
-
-    setSuccess("Akun berhasil dibuat! Mengarahkan ke login...");
-    setTimeout(() => router.push("/login"), 2000);
   };
 
   return (
@@ -59,8 +65,18 @@ export default function Register() {
 
         <input name="name" type="text" placeholder="Nama lengkap" required />
         <input name="email" type="email" placeholder="Email" required />
-        <input name="password" type="password" placeholder="Password (min. 6 karakter)" required />
-        <input name="confirmPassword" type="password" placeholder="Ulangi password" required />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password (min. 6 karakter)"
+          required
+        />
+        <input
+          name="confirmPassword"
+          type="password"
+          placeholder="Ulangi password"
+          required
+        />
 
         <button type="submit" disabled={loading}>
           {loading ? "Mendaftarkan..." : "Daftar"}

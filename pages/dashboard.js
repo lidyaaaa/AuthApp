@@ -8,14 +8,14 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated") {
-      if (session.user.role === "admin") {
-        router.replace("/admin/dashboard");
-      } else {
-        router.replace("/user/dashboard");
-      }
+  if (status === "authenticated" && session?.user?.role) { // ← tambah guard ini
+    if (session.user.role === "admin") {
+      router.replace("/admin/dashboard");
+    } else {
+      router.replace("/user/dashboard");
     }
-  }, [status, session]);
+  }
+}, [status, session]);
 
   return (
     <Layout>
